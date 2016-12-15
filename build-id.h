@@ -22,24 +22,17 @@
  * IN THE SOFTWARE.
  */
 
-#include <elf.h>
-#include <stdio.h>
-#include <string.h>
+#define _GNU_SOURCE
+#include <link.h>
+#include <stdint.h>
 
-#if __x86_64__
-#  define ElfW(type) Elf64_##type
-#else
-#  define ElfW(type) Elf32_##type
-#endif
+struct note;
 
-void
-so_print(void);
-
-const ElfW(Nhdr) *
-build_id_find_nhdr(void);
+const struct note *
+build_id_find_nhdr(const char *name);
 
 ElfW(Word)
-build_id_length(const ElfW(Nhdr) *nhdr);
+build_id_length(const struct note *note);
 
 void
-build_id_read(const ElfW(Nhdr) *nhdr, unsigned char *build_id);
+build_id_read(const struct note *note, unsigned char *build_id);

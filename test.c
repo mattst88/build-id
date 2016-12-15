@@ -30,27 +30,17 @@
 int
 main(int argc, char *argv[])
 {
-    extern char etext, edata, end;
-    extern const char __note_gnu_build_id_end[] __attribute__((weak));
-    extern const char __note_gnu_build_id_start[] __attribute__((weak));
-    printf("Executable:\n");
-    printf("    program text (etext)      %10p\n", &etext);
-    printf("    initialized data (edata)  %10p\n", &edata);
-    printf("    uninitialized data (end)  %10p\n", &end);
-    printf("    note section start        %10p\n", __note_gnu_build_id_start);
-    printf("    note section end          %10p\n", __note_gnu_build_id_end);
-
-    const ElfW(Nhdr) *nhdr = build_id_find_nhdr();
-    if (!nhdr)
+    const struct note *note = build_id_find_nhdr("");
+    if (!note)
         return -1;
 
-    ElfW(Word) len = build_id_length(nhdr);
+    ElfW(Word) len = build_id_length(note);
 
     unsigned char *build_id = malloc(len * sizeof(char));
     if (!build_id)
         return -1;
 
-    build_id_read(nhdr, build_id);
+    build_id_read(note, build_id);
 
     printf("Build ID: ");
     for (ElfW(Word) i = 0; i < len; i++) {

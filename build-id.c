@@ -22,61 +22,87 @@
  * IN THE SOFTWARE.
  */
 
-#include <elf.h>
+#define _GNU_SOURCE
+#include <link.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "build-id.h"
 
-extern const ElfW(Nhdr) __note_gnu_build_id_start[] __attribute__((weak));
-extern const ElfW(Nhdr) __note_gnu_build_id_end[] __attribute__((weak));
+#define ALIGN(val, align)       (((val) + (align) - 1) & ~((align) - 1))
 
-void
-so_print(void)
+struct note {
+    ElfW(Nhdr) nhdr;
+
+    char name[4];
+    uint8_t build_id[0];
+};
+
+struct callback_data {
+    const char *name;
+    struct note *note;
+};
+
+static int
+build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
 {
-    extern char etext, edata, end;
-    printf("Shared object:\n");
-    printf("    program text (etext)      %10p\n", &etext);
-    printf("    initialized data (edata)  %10p\n", &edata);
-    printf("    uninitialized data (end)  %10p\n", &end);
-    printf("    note section start        %10p\n", __note_gnu_build_id_start);
-    printf("    note section end          %10p\n", __note_gnu_build_id_end);
-}
+    struct callback_data *data = data_;
 
-const ElfW(Nhdr) *
-build_id_find_nhdr(void)
-{
-    const ElfW(Nhdr) *nhdr = (void *)__note_gnu_build_id_start;
+    if (strcmp(info->dlpi_name, data->name) != 0)
+        return 0;
 
-    if (__note_gnu_build_id_start >= __note_gnu_build_id_end) {
-        fprintf(stderr, "No .note section\n");
-        return NULL;
-    }
+    for (unsigned i = 0; i < info->dlpi_phnum; i++) {
+        if (info->dlpi_phdr[i].p_type != PT_NOTE)
+            continue;
 
-    while (nhdr->n_type != NT_GNU_BUILD_ID)
-    {
-        nhdr = (ElfW(Nhdr) *)
-            ((intptr_t)nhdr + sizeof(ElfW(Nhdr)) + nhdr->n_namesz + nhdr->n_descsz);
+        struct note *note = (void *)(info->dlpi_addr +
+                                     info->dlpi_phdr[i].p_vaddr);
+        ptrdiff_t len = info->dlpi_phdr[i].p_filesz;
 
-        if (nhdr >= __note_gnu_build_id_end) {
-            fprintf(stderr, "No .note.gnu.build-id section found\n");
-            return NULL;
+        while (len >= sizeof(struct note)) {
+            if (note->nhdr.n_type == NT_GNU_BUILD_ID &&
+                note->nhdr.n_descsz != 0 &&
+                note->nhdr.n_namesz == 4 &&
+                memcmp(note->name, "GNU", 4) == 0) {
+                data->note = note;
+                return 1;
+            }
+
+            size_t offset = sizeof(ElfW(Nhdr)) +
+                            ALIGN(note->nhdr.n_namesz, 4) +
+                            ALIGN(note->nhdr.n_descsz, 4);
+            note = (struct note *)((char *)note + offset);
+            len -= offset;
         }
     }
 
-    return nhdr;
+    return 0;
+}
+
+const struct note *
+build_id_find_nhdr(const char *name)
+{
+    struct callback_data data = {
+        .name = name,
+        .note = NULL,
+    };
+
+    if (dl_iterate_phdr(build_id_find_nhdr_callback, &data)) {
+        return data.note;
+    } else {
+        return NULL;
+    }
 }
 
 ElfW(Word)
-build_id_length(const ElfW(Nhdr) *nhdr)
+build_id_length(const struct note *note)
 {
-    return nhdr->n_descsz;
+    return note->nhdr.n_descsz;
 }
 
 void
-build_id_read(const ElfW(Nhdr) *nhdr, unsigned char *build_id)
+build_id_read(const struct note *note, unsigned char *build_id)
 {
-    memcpy(build_id,
-           (unsigned char *)nhdr + sizeof(ElfW(Nhdr)) + nhdr->n_namesz,
-           nhdr->n_descsz);
+    memcpy(build_id, note->build_id, note->nhdr.n_descsz);
 }

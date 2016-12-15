@@ -19,7 +19,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-LDFLAGS = -Wl,--build-id=sha1 -Wl,--default-script=build-id.lds
+LDFLAGS = -Wl,--build-id=sha1
 
 all: build-id so-build-id
 
@@ -33,7 +33,7 @@ shared-build-id.o: build-id.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c $^ -o $@
 
 libbuild-id.so: shared-build-id.o
-	$(CC) -Wl,-Bsymbolic $(LDFLAGS) -shared $^ -o $@
+	$(CC) $(LDFLAGS) -shared $^ -o $@
 
 clean:
 	rm -f build-id so-build-id libbuild-id.so *.o
