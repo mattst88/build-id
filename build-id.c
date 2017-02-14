@@ -24,7 +24,6 @@
 
 #define _GNU_SOURCE
 #include <link.h>
-#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 
