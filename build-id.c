@@ -80,7 +80,7 @@ build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
 }
 
 const struct build_id_note *
-build_id_find_nhdr(const char *name)
+build_id_find_nhdr_by_name(const char *name)
 {
     struct callback_data data = {
         .name = name,

@@ -30,7 +30,8 @@
 int
 main(int argc, char *argv[])
 {
-    const struct build_id_note *note = build_id_find_nhdr("./libbuild-id.so");
+    const struct build_id_note *note =
+        build_id_find_nhdr_by_name("./libbuild-id.so");
     if (!note)
         return -1;
 

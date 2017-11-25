@@ -28,7 +28,7 @@
 struct build_id_note;
 
 const struct build_id_note *
-build_id_find_nhdr(const char *name);
+build_id_find_nhdr_by_name(const char *name);
 
 ElfW(Word)
 build_id_length(const struct build_id_note *note);
