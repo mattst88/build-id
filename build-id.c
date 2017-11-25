@@ -87,11 +87,10 @@ build_id_find_nhdr(const char *name)
         .note = NULL,
     };
 
-    if (dl_iterate_phdr(build_id_find_nhdr_callback, &data)) {
-        return data.note;
-    } else {
+    if (!dl_iterate_phdr(build_id_find_nhdr_callback, &data))
         return NULL;
-    }
+
+    return data.note;
 }
 
 ElfW(Word)
