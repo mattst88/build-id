@@ -19,12 +19,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+LDLIBS = -ldl
 LDFLAGS = -Wl,--build-id=sha1
 
 all: build-id so-build-id
 
 build-id: test.o build-id.o
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 so-build-id: so-test.o libbuild-id.so
 	$(CC) $(LDFLAGS) $^ -o $@
@@ -33,7 +34,7 @@ shared-build-id.o: build-id.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c $^ -o $@
 
 libbuild-id.so: shared-build-id.o
-	$(CC) $(LDFLAGS) -shared $^ -o $@
+	$(CC) $(LDFLAGS) -shared $^ -o $@ $(LDLIBS)
 
 clean:
 	rm -f build-id so-build-id libbuild-id.so *.o

@@ -23,6 +23,7 @@
  */
 
 #define _GNU_SOURCE
+#include <dlfcn.h>
 #include <link.h>
 #include <stddef.h>
 #include <string.h>
@@ -38,8 +39,16 @@ struct build_id_note {
     uint8_t build_id[0];
 };
 
+enum tag { BY_NAME, BY_SYMBOL };
+
 struct callback_data {
-    const char *name;
+    union {
+        const char *name;
+
+        /* Base address of shared object, taken from Dl_info::dli_fbase */
+        const void *dli_fbase;
+    };
+    enum tag tag;
     struct build_id_note *note;
 };
 
@@ -48,7 +57,10 @@ build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
 {
     struct callback_data *data = data_;
 
-    if (strcmp(info->dlpi_name, data->name) != 0)
+    if (data->tag == BY_NAME && strcmp(info->dlpi_name, data->name) != 0)
+        return 0;
+
+    if (data->tag == BY_SYMBOL && (void *)info->dlpi_addr != data->dli_fbase)
         return 0;
 
     for (unsigned i = 0; i < info->dlpi_phnum; i++) {
@@ -83,7 +95,31 @@ const struct build_id_note *
 build_id_find_nhdr_by_name(const char *name)
 {
     struct callback_data data = {
+        .tag = BY_NAME,
         .name = name,
+        .note = NULL,
+    };
+
+    if (!dl_iterate_phdr(build_id_find_nhdr_callback, &data))
+        return NULL;
+
+    return data.note;
+}
+
+const struct build_id_note *
+build_id_find_nhdr_by_symbol(const void *symbol)
+{
+    Dl_info info;
+
+    if (!dladdr(symbol, &info))
+        return NULL;
+
+    if (!info.dli_fbase)
+        return NULL;
+
+    struct callback_data data = {
+        .tag = BY_SYMBOL,
+        .dli_fbase = info.dli_fbase,
         .note = NULL,
     };
 
