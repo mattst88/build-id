@@ -25,13 +25,13 @@
 #define _GNU_SOURCE
 #include <link.h>
 
-struct note;
+struct build_id_note;
 
-const struct note *
+const struct build_id_note *
 build_id_find_nhdr(const char *name);
 
 ElfW(Word)
-build_id_length(const struct note *note);
+build_id_length(const struct build_id_note *note);
 
 const uint8_t *
-build_id_data(const struct note *note);
+build_id_data(const struct build_id_note *note);

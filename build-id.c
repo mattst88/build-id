@@ -31,7 +31,7 @@
 
 #define ALIGN(val, align)       (((val) + (align) - 1) & ~((align) - 1))
 
-struct note {
+struct build_id_note {
     ElfW(Nhdr) nhdr;
 
     char name[4];
@@ -40,7 +40,7 @@ struct note {
 
 struct callback_data {
     const char *name;
-    struct note *note;
+    struct build_id_note *note;
 };
 
 static int
@@ -55,11 +55,11 @@ build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
         if (info->dlpi_phdr[i].p_type != PT_NOTE)
             continue;
 
-        struct note *note = (void *)(info->dlpi_addr +
-                                     info->dlpi_phdr[i].p_vaddr);
+        struct build_id_note *note = (void *)(info->dlpi_addr +
+                                              info->dlpi_phdr[i].p_vaddr);
         ptrdiff_t len = info->dlpi_phdr[i].p_filesz;
 
-        while (len >= sizeof(struct note)) {
+        while (len >= sizeof(struct build_id_note)) {
             if (note->nhdr.n_type == NT_GNU_BUILD_ID &&
                 note->nhdr.n_descsz != 0 &&
                 note->nhdr.n_namesz == 4 &&
@@ -71,7 +71,7 @@ build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
             size_t offset = sizeof(ElfW(Nhdr)) +
                             ALIGN(note->nhdr.n_namesz, 4) +
                             ALIGN(note->nhdr.n_descsz, 4);
-            note = (struct note *)((char *)note + offset);
+            note = (struct build_id_note *)((char *)note + offset);
             len -= offset;
         }
     }
@@ -79,7 +79,7 @@ build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
     return 0;
 }
 
-const struct note *
+const struct build_id_note *
 build_id_find_nhdr(const char *name)
 {
     struct callback_data data = {
@@ -95,13 +95,13 @@ build_id_find_nhdr(const char *name)
 }
 
 ElfW(Word)
-build_id_length(const struct note *note)
+build_id_length(const struct build_id_note *note)
 {
     return note->nhdr.n_descsz;
 }
 
 const uint8_t *
-build_id_data(const struct note *note)
+build_id_data(const struct build_id_note *note)
 {
     return note->build_id;
 }

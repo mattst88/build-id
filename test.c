@@ -30,7 +30,7 @@
 int
 main(int argc, char *argv[])
 {
-    const struct note *note = build_id_find_nhdr("");
+    const struct build_id_note *note = build_id_find_nhdr("");
     if (!note)
         return -1;
 
