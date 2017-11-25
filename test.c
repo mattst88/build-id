@@ -36,11 +36,7 @@ main(int argc, char *argv[])
 
     ElfW(Word) len = build_id_length(note);
 
-    unsigned char *build_id = malloc(len * sizeof(char));
-    if (!build_id)
-        return -1;
-
-    build_id_read(note, build_id);
+    const uint8_t *build_id = build_id_data(note);
 
     printf("Build ID: ");
     for (ElfW(Word) i = 0; i < len; i++) {
