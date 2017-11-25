@@ -1,0 +1,4 @@
+*.o
+build-id
+libbuild-id.so
+so-build-id
