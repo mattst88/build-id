@@ -1,4 +1,6 @@
 *.o
+*.expected
+*.result
 build-id
 libbuild-id.so
 so-build-id

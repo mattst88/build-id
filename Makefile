@@ -21,6 +21,7 @@
 
 LDLIBS = -ldl
 LDFLAGS = -Wl,--build-id=sha1
+GREP_SHA1 = egrep -o '\b[0-9a-f]{40}\b'
 
 all: build-id so-build-id
 
@@ -36,5 +37,22 @@ shared-build-id.o: build-id.c
 libbuild-id.so: shared-build-id.o
 	$(CC) $(LDFLAGS) -shared $^ -o $@ $(LDLIBS)
 
+build-id-test.expected: build-id
+	file $< | $(GREP_SHA1) &> $@
+
+so-build-id-test.expected: libbuild-id.so
+	file $< | $(GREP_SHA1) &> $@
+
+build-id-test.result: build-id
+	./$< | $(GREP_SHA1) &> $@
+
+so-build-id-test.result: so-build-id libbuild-id.so
+	LD_LIBRARY_PATH=. ./$< | $(GREP_SHA1) &> $@
+
+check: build-id-test.expected so-build-id-test.expected build-id-test.result so-build-id-test.result
+	cmp build-id-test.expected build-id-test.result
+	cmp so-build-id-test.expected so-build-id-test.result
+	@echo PASS
+
 clean:
-	rm -f build-id so-build-id libbuild-id.so *.o
+	rm -f build-id so-build-id libbuild-id.so *.o *.result *.expected
