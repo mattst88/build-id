@@ -4,3 +4,4 @@
 build-id
 libbuild-id.so
 so-build-id
+dlopen-build-id
