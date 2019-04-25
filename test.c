@@ -34,6 +34,11 @@ main(int argc, char *argv[])
     if (!note)
         return -1;
 
+    const struct build_id_note *note_by_symbol =
+        build_id_find_nhdr_by_symbol(main);
+    if (note != note_by_symbol)
+        return -1;
+
     ElfW(Word) len = build_id_length(note);
 
     const uint8_t *build_id = build_id_data(note);
