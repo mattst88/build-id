@@ -19,6 +19,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+CFLAGS += -fPIC
 LDLIBS = -ldl
 LDFLAGS = -Wl,--build-id=sha1
 GREP_SHA1 = egrep -o '\b[0-9a-f]{40}\b'
@@ -35,7 +36,7 @@ dlopen-build-id: dlopen-test.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 shared-build-id.o: build-id.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c $^ -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $^ -o $@
 
 libbuild-id.so: shared-build-id.o
 	$(CC) $(LDFLAGS) -shared $^ -o $@ $(LDLIBS)
