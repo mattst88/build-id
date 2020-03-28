@@ -18,10 +18,10 @@ I spent a good amount of time researching possible ways of uniquely identifying 
 
 I found the `--build-id=...` flag but struggled to find a way to access the identifier it generates from within a running process.
 
-## The solution
-The `dl_iterate_phdr` function is the critical piece of the puzzle, allowing the application to inspect the shared objects it has loaded. A callback function searches the program headers of each object loaded and finds the appropriate `.note.gnu.build-id` section. Mesa includes its own build-id into a collection of other data it hashes to produce the key to look up a shader in the on-disk cache, thereby ensuring that it will only load shader programs that were produced by the same build of Mesa.
+## The Solution
+The `dl_iterate_phdr` function is the critical piece of the puzzle, allowing the application to inspect the shared objects it has loaded. A callback function searches the program headers of each object loaded and finds the appropriate `.note.gnu.build-id` section. Mesa's build-id is included in the data that's hashed to provide the key to look up a shader in the on-disk cache. This ensures that Mesa will only load shader programs that were produced by an identical build.
 
-With the problem now solved and the code in successful use in Mesa since 2017, my hope is to make the technique more widely known and in doing so to save others time. The code very small and MIT licensed, so feel free to include the two source files into your project.
+With the problem now solved and the code in successful use in Mesa since 2017, my hope is to make the technique more widely known and in doing so to save others time. The code is very small and MIT licensed, so feel free to include the two source files in your project.
 
 ## API
 ### Usage
@@ -32,25 +32,29 @@ The API consists of only four functions and an opaque struct data type.
 struct build_id_note;
 ```
 
-Find the `.note.gnu.build-id` section given the filename of the ELF binary. Returns `NULL` on failure.
+#### Find the `.note.gnu.build-id` section given the filename of the ELF binary
 ```c
 const struct build_id_note *
 build_id_find_nhdr_by_name(const char *name);
 ```
 
-Find the `.note.gnu.build-id` section given a symbol in the ELF binary. Returns `NULL` on failure.
+Returns `NULL` on failure.
+
+#### Find the `.note.gnu.build-id` section given a symbol in the ELF binary
 ```c
 const struct build_id_note *
 build_id_find_nhdr_by_symbol(const void *symbol);
 ```
 
-Return the length (in bytes) of the build-id.
+Returns `NULL` on failure.
+
+#### Return the length (in bytes) of the build-id
 ```c
 ElfW(Word)
 build_id_length(const struct build_id_note *note);
 ```
 
-Return a pointer to the build-id.
+#### Return a pointer to the build-id
 ```c
 const uint8_t *
 build_id_data(const struct build_id_note *note);
@@ -108,7 +112,7 @@ For Mesa's usage this is entirely acceptable because we expect that the vast maj
 
 ## Other proposed (and failed) solutions
 
-Other proposed solutions I tried failed for a variety of reasons:
+Other proposed solutions that I tried failed for a variety of reasons:
 
   * "Just hash all of the source code"
   * Use a linker script to insert `start`/`end` symbols around the `.note.gnu.build-id`. Failed when reading the build-id of a shared object for unknown reasons. Incompatible with [gold](https://en.wikipedia.org/wiki/Gold_(linker)), which does not use linker scripts.
