@@ -115,5 +115,5 @@ For Mesa's usage this is entirely acceptable because we expect that the vast maj
 Other proposed solutions that I tried failed for a variety of reasons:
 
   * "Just hash all of the source code"
-  * Use a linker script to insert `start`/`end` symbols around the `.note.gnu.build-id`. Failed when reading the build-id of a shared object for unknown reasons. Incompatible with [gold](https://en.wikipedia.org/wiki/Gold_(linker)), which does not use linker scripts.
+  * Use a linker script to insert `start`/`end` symbols around the `.note.gnu.build-id`. Failed when reading the build-id of a shared object for unknown reasons.
   * Use `dladdr()` to find the path and name of the binary. Open and read ELF sections. Effectively the same as what the code in this repository does, but without the guarantee that the binary you read from the disk is the same one that is executing in the current process.
