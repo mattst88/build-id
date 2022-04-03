@@ -65,8 +65,9 @@ build_id_find_nhdr_callback(struct dl_phdr_info *info, size_t size, void *data_)
 {
     struct callback_data *data = data_;
 
-    if (data->tag == BY_NAME && strcmp(info->dlpi_name, data->name) != 0)
-        return 0;
+    if (data->tag == BY_NAME)
+        if (!info->dlpi_name || strcmp(info->dlpi_name, data->name) != 0)
+            return 0;
 
     if (data->tag == BY_SYMBOL) {
        /* Calculate address where shared object is mapped into the process space.
